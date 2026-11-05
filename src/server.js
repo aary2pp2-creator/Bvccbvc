@@ -104,4 +104,29 @@ app.post('/stripe/webhook', express.raw({ type: 'application/json' }), async (re
   }
   res.json({ received: true });
 });
-app.listen(PORT, '0.0.0.0', () => console.log('AI Dollar Business bot listening on ' + PORT));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('AI Dollar Business bot listening on ' + PORT);
+  // Register Telegram's webhook automatically whenever the service starts.
+  if (process.env.TELEGRAM_BOT_TOKEN) {
+    const baseUrl = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
+    if (!baseUrl) {
+      console.error('PUBLIC_BASE_URL is missing; Telegram webhook was not registered.');
+      return;
+    }
+    const payload = { url: baseUrl + '/telegram/webhook' };
+    if (process.env.TELEGRAM_WEBHOOK_SECRET) {
+      payload.secret_token = process.env.TELEGRAM_WEBHOOK_SECRET;
+    }
+    fetch('https://api.telegram.org/bot' + process.env.TELEGRAM_BOT_TOKEN + '/setWebhook', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(async response => {
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.description || 'setWebhook failed');
+      console.log('Telegram webhook registered successfully.');
+    }).catch(error => console.error('Telegram webhook registration failed:', error.message));
+  } else {
+    console.log('TELEGRAM_BOT_TOKEN is not set; webhook registration is waiting for the bot token.');
+  }
+});
