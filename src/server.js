@@ -38,20 +38,28 @@ async function sendTelegram(chatId, text) {
 }
 
 async function makeContent(key, brief) {
-  if (!process.env.AI_API_KEY) {
-    return `Thank you for your order.\n\nCustomer brief: ${brief}\n\nThis product is being prepared. The shop owner must configure AI_API_KEY on Render before automated AI content generation can be enabled.`;
+  const apiKey = process.env.OPENROUTER_API_KEY || process.env.AI_API_KEY;
+  if (!apiKey) {
+    return `Thank you for your order.\n\nCustomer brief: ${brief}\n\nAutomated AI generation is not enabled yet. Add OPENROUTER_API_KEY in Render Environment Variables.`;
   }
-  const base = (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
+  const base = (process.env.AI_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
   const response = await fetch(base + '/chat/completions', {
     method: 'POST',
-    headers: { authorization: `Bearer ${process.env.AI_API_KEY}`, 'content-type': 'application/json' },
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      'content-type': 'application/json',
+      'HTTP-Referer': process.env.PUBLIC_BASE_URL || 'https://ai-dollar-business.onrender.com',
+      'X-Title': 'AI Dollar Business'
+    },
     body: JSON.stringify({
-      model: process.env.AI_MODEL || 'gpt-4o-mini',
+      model: process.env.AI_MODEL || 'openai/gpt-4o-mini',
       messages: [{ role: 'user', content: `Create ${products[key].name} in polished English for this customer brief: ${brief}` }]
     })
   });
-  if (!response.ok) throw new Error('AI provider returned ' + response.status);
-  return (await response.json()).choices?.[0]?.message?.content || 'No content returned.';
+  const responseText = await response.text();
+  if (!response.ok) throw new Error(`AI provider returned HTTP ${response.status}: ${responseText.slice(0, 1000)}`);
+  const data = JSON.parse(responseText);
+  return data.choices?.[0]?.message?.content || 'No content returned.';
 }
 
 function pdfBuffer(title, body) {
