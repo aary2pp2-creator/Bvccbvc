@@ -1,47 +1,57 @@
 <!doctype html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Dollar Business — Content Services</title>
+<title>کسب‌وکار دلاری با هوش مصنوعی | AI Dollar Business</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#101827;color:#f4f7fb;line-height:1.6}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#101827;color:#f4f7fb;line-height:1.7}
 main{max-width:850px;margin:auto;padding:28px 18px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
 button,.btn{background:#d8a84e;color:#172033;border:0;padding:12px 18px;border-radius:9px;font-weight:bold;cursor:pointer}
-.hero{padding:54px 0 28px}.hero h1{font-size:clamp(32px,7vw,52px);line-height:1.1;margin:12px 0}.muted{color:#bac5d5}
+button:disabled{opacity:.65;cursor:wait}
+.hero{padding:54px 0 28px}.hero h1{font-size:clamp(32px,7vw,52px);line-height:1.2;margin:12px 0}.muted{color:#bac5d5}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:24px 0}
 .card,form{background:#1b293d;border:1px solid #31435c;border-radius:14px;padding:20px}
 .card h3{margin-top:0;color:#f0c36c}form{display:grid;gap:13px;margin-top:18px}
 label{font-weight:bold}input,select,textarea{width:100%;padding:12px;border-radius:8px;border:1px solid #60718a;background:#f8fafc;color:#172033;font:inherit}
 textarea{min-height:110px}#result{min-height:24px;color:#f0c36c}footer{margin:35px 0;color:#bac5d5;font-size:13px}
-[dir=rtl] body{text-align:right}
 </style></head>
 <body><main>
-<div class="top"><strong>AI DOLLAR BUSINESS</strong><button type="button" id="lang">فارسی</button></div>
-<section class="hero"><p class="muted" id="eyebrow">CONTENT THAT HELPS YOUR BUSINESS GROW</p><h1 id="headline">Professional content, made simple.</h1><p class="muted" id="intro">Get social media captions, product descriptions and content plans for your business.</p></section>
-<h2 id="servicesTitle">Our services</h2>
+<div class="top"><strong>AI DOLLAR BUSINESS</strong><button type="button" id="lang">English</button></div>
+<section class="hero"><p class="muted" id="eyebrow">محتوایی که به رشد کسب‌وکار شما کمک می‌کند</p><h1 id="headline">محتوای حرفه‌ای، ساده و کاربردی</h1><p class="muted" id="intro">برای کسب‌وکار خود کپشن شبکه‌های اجتماعی، توضیحات محصول و برنامه‌های محتوایی دریافت کنید.</p></section>
+<h2 id="servicesTitle">خدمات ما</h2>
 <div class="cards">
-<div class="card"><h3 id="s1">Social media captions</h3><p id="d1">Clear, engaging captions tailored to your brand.</p></div>
-<div class="card"><h3 id="s2">Product descriptions</h3><p id="d2">Helpful descriptions that explain your product's value.</p></div>
-<div class="card"><h3 id="s3">Content plans</h3><p id="d3">Practical ideas and a simple publishing calendar.</p></div>
+<div class="card"><h3 id="s1">کپشن‌های شبکه‌های اجتماعی</h3><p id="d1">کپشن‌های واضح و جذاب، متناسب با برند شما.</p></div>
+<div class="card"><h3 id="s2">توضیحات محصول</h3><p id="d2">توضیحات مفیدی که ارزش محصول شما را به‌خوبی معرفی می‌کند.</p></div>
+<div class="card"><h3 id="s3">برنامه‌های محتوایی</h3><p id="d3">ایده‌های کاربردی و یک تقویم ساده برای انتشار محتوا.</p></div>
 </div>
-<h2 id="formTitle">Request a service</h2>
-<p class="muted" id="formIntro">Send your details. We will contact you to discuss the request and payment.</p>
+<h2 id="formTitle">درخواست خدمات</h2>
+<p class="muted" id="formIntro">اطلاعات خود را ارسال کنید. برای گفت‌وگو درباره درخواست و پرداخت با شما تماس می‌گیریم.</p>
 <form id="orderForm">
-<div><label for="name" id="nameLabel">Your name</label><input id="name" name="name" required maxlength="100"></div>
-<div><label for="contact" id="contactLabel">Email or Telegram username</label><input id="contact" name="contact" required maxlength="150"></div>
-<div><label for="service" id="serviceLabel">Service</label><select id="service" name="service" required><option value="Social media captions">Social media captions</option><option value="Product descriptions">Product descriptions</option><option value="Content plan">Content plan</option><option value="Other">Other</option></select></div>
-<div><label for="details" id="detailsLabel">Tell us about your business and what you need</label><textarea id="details" name="details" required minlength="10" maxlength="1500"></textarea></div>
-<button id="submit" type="submit">Send order request</button><p id="result" role="status"></p>
+<div><label for="name" id="nameLabel">نام شما</label><input id="name" name="name" required maxlength="100"></div>
+<div><label for="contact" id="contactLabel">ایمیل یا نام کاربری تلگرام</label><input id="contact" name="contact" required maxlength="150"></div>
+<div><label for="service" id="serviceLabel">نوع خدمت</label><select id="service" name="service" required><option value="Social media captions">کپشن‌های شبکه‌های اجتماعی</option><option value="Product descriptions">توضیحات محصول</option><option value="Content plan">برنامه محتوایی</option><option value="Other">سایر</option></select></div>
+<div><label for="details" id="detailsLabel">کسب‌وکار و نیازهای خود را با ما در میان بگذارید</label><textarea id="details" name="details" required minlength="10" maxlength="1500"></textarea></div>
+<button id="submit" type="submit">ارسال درخواست سفارش</button><p id="result" role="status"></p>
 </form>
-<footer id="footer">Submitting this form sends a request only. It does not confirm a paid order. Payment and delivery details will be agreed directly.</footer>
+<footer id="footer">ارسال این فرم فقط به معنی ثبت درخواست است و سفارش پرداخت‌شده را تأیید نمی‌کند. جزئیات پرداخت و تحویل مستقیماً با شما هماهنگ خواهد شد.</footer>
 </main>
 <script>
 const copy={
-en:{eyebrow:"CONTENT THAT HELPS YOUR BUSINESS GROW",headline:"Professional content, made simple.",intro:"Get social media captions, product descriptions and content plans for your business.",servicesTitle:"Our services",s1:"Social media captions",d1:"Clear, engaging captions tailored to your brand.",s2:"Product descriptions",d2:"Helpful descriptions that explain your product's value.",s3:"Content plans",d3:"Practical ideas and a simple publishing calendar.",formTitle:"Request a service",formIntro:"Send your details. We will contact you to discuss the request and payment.",nameLabel:"Your name",contactLabel:"Email or Telegram username",serviceLabel:"Service",detailsLabel:"Tell us about your business and what you need",submit:"Send order request",footer:"Submitting this form sends a request only. It does not confirm a paid order. Payment and delivery details will be agreed directly.",sent:"Your request was sent. We will contact you soon.",failed:"Could not send your request. Please try again later.",button:"فارسی"},
-fa:{eyebrow:"محتوایی برای رشد کسب‌وکار شما",headline:"تولید محتوای حرفه‌ای، ساده و کاربردی",intro:"برای کسب‌وکار خود کپشن شبکه‌های اجتماعی، توضیحات محصول و برنامه محتوایی دریافت کنید.",servicesTitle:"خدمات ما",s1:"کپشن شبکه‌های اجتماعی",d1:"کپشن‌های جذاب و متناسب با برند شما.",s2:"توضیحات محصولات",d2:"متن‌هایی روشن برای معرفی ارزش محصولات شما.",s3:"برنامه محتوایی",d3:"ایده‌های کاربردی و تقویم ساده انتشار محتوا.",formTitle:"ثبت درخواست سفارش",formIntro:"اطلاعات خود را ارسال کنید تا برای هماهنگی سفارش و پرداخت با شما تماس بگیریم.",nameLabel:"نام شما",contactLabel:"ایمیل یا نام کاربری تلگرام",serviceLabel:"نوع خدمت",detailsLabel:"درباره کسب‌وکار و نیازتان توضیح دهید",submit:"ارسال درخواست",footer:"ارسال این فرم فقط ثبت درخواست است و به معنی سفارش پرداخت‌شده نیست. جزئیات پرداخت و تحویل مستقیماً هماهنگ می‌شود.",sent:"درخواست شما ارسال شد. به‌زودی با شما تماس می‌گیریم.",failed:"ارسال درخواست انجام نشد. لطفاً بعداً دوباره تلاش کنید.",button:"English"}};
-let lang="en";
-function setLang(){const c=copy[lang];document.documentElement.lang=lang;document.documentElement.dir=lang==="fa"?"rtl":"ltr";Object.keys(c).forEach(k=>{const el=document.getElementById(k);if(el)el.textContent=c[k]});document.getElementById("lang").textContent=c.button}
+en:{eyebrow:"CONTENT THAT HELPS YOUR BUSINESS GROW",headline:"Professional content, made simple.",intro:"Get social media captions, product descriptions and content plans for your business.",servicesTitle:"Our services",s1:"Social media captions",d1:"Clear, engaging captions tailored to your brand.",s2:"Product descriptions",d2:"Helpful descriptions that explain your product's value.",s3:"Content plans",d3:"Practical ideas and a simple publishing calendar.",formTitle:"Request a service",formIntro:"Send your details. We will contact you to discuss your request and payment.",nameLabel:"Your name",contactLabel:"Email or Telegram username",serviceLabel:"Service",detailsLabel:"Tell us about your business and what you need",submit:"Send order request",footer:"Submitting this form sends a request only. It does not confirm a paid order. Payment and delivery details will be agreed directly.",sent:"Your request was sent. We will contact you soon.",failed:"Could not send your request. Please try again later.",sending:"Sending…",button:"فارسی",options:["Social media captions","Product descriptions","Content plan","Other"]},
+fa:{eyebrow:"محتوایی که به رشد کسب‌وکار شما کمک می‌کند",headline:"محتوای حرفه‌ای، ساده و کاربردی",intro:"برای کسب‌وکار خود کپشن شبکه‌های اجتماعی، توضیحات محصول و برنامه‌های محتوایی دریافت کنید.",servicesTitle:"خدمات ما",s1:"کپشن‌های شبکه‌های اجتماعی",d1:"کپشن‌های واضح و جذاب، متناسب با برند شما.",s2:"توضیحات محصول",d2:"توضیحات مفیدی که ارزش محصول شما را توضیح می‌دهد.",s3:"برنامه‌های محتوایی",d3:"ایده‌های کاربردی و یک تقویم ساده برای انتشار محتوا.",formTitle:"درخواست خدمات",formIntro:"اطلاعات خود را ارسال کنید. برای گفت‌وگو درباره درخواست و پرداخت با شما تماس می‌گیریم.",nameLabel:"نام شما",contactLabel:"ایمیل یا نام کاربری تلگرام",serviceLabel:"نوع خدمت",detailsLabel:"کسب‌وکار و نیازهای خود را با ما در میان بگذارید",submit:"ارسال درخواست سفارش",footer:"ارسال این فرم فقط به منزله ثبت درخواست است و سفارش پرداخت‌شده را تأیید نمی‌کند. جزئیات پرداخت و تحویل مستقیماً هماهنگ خواهد شد.",sent:"درخواست شما ارسال شد. به‌زودی با شما تماس می‌گیریم.",failed:"ارسال درخواست انجام نشد. لطفاً بعداً دوباره تلاش کنید.",sending:"در حال ارسال…",button:"English",options:["کپشن‌های شبکه‌های اجتماعی","توضیحات محصول","برنامه محتوایی","سایر"]}}
+let lang="fa";
+function setLang(){
+ const c=copy[lang];document.documentElement.lang=lang;document.documentElement.dir=lang==="fa"?"rtl":"ltr";
+ Object.keys(c).forEach(k=>{const el=document.getElementById(k);if(el&&k!=="options")el.textContent=c[k]});
+ document.getElementById("lang").textContent=c.button;
+ [...document.querySelectorAll("#service option")].forEach((o,i)=>o.textContent=c.options[i]);
+}
 document.getElementById("lang").addEventListener("click",()=>{lang=lang==="en"?"fa":"en";setLang()});
-document.getElementById("orderForm").addEventListener("submit",async e=>{e.preventDefault();const form=e.currentTarget;const data=Object.fromEntries(new FormData(form).entries());data.language=lang;const result=document.getElementById("result");const btn=document.getElementById("submit");btn.disabled=true;result.textContent="Sending…";try{const r=await fetch("/api/orders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});const j=await r.json();if(!r.ok||!j.ok)throw new Error(j.message||"Request failed");result.textContent=copy[lang].sent;form.reset()}catch(err){result.textContent=copy[lang].failed}finally{btn.disabled=false}});
+document.getElementById("orderForm").addEventListener("submit",async e=>{
+ e.preventDefault();const form=e.currentTarget;const data=Object.fromEntries(new FormData(form).entries());data.language=lang;
+ const result=document.getElementById("result");const btn=document.getElementById("submit");btn.disabled=true;result.textContent=copy[lang].sending;
+ try{const r=await fetch("/api/orders",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});const j=await r.json();if(!r.ok||!j.ok)throw new Error(j.message||"Request failed");result.textContent=copy[lang].sent;form.reset()}
+ catch(err){result.textContent=copy[lang].failed}finally{btn.disabled=false}
+});
 setLang();
 </script></body></html>
