@@ -37,6 +37,60 @@ async function sendTelegram(chatId, text) {
   return telegram('sendMessage', { chat_id: chatId, text });
 }
 
+async function generateContent(key, brief) {
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.warn('OPENROUTER_API_KEY is missing; using offline templates.');
+    return makeContent(key, brief);
+  }
+
+  const productInstructions = {
+    captions: 'Write exactly 10 distinct, polished, ready-to-use social media captions in English. Include suitable calls to action and relevant hashtags.',
+    content_pack: 'Create a useful 30-day social media content pack in English. For each day include a topic, format, complete caption, and call to action.',
+    calendar: 'Create a practical 30-day social media content calendar in English. For each day include topic, format, content goal, and a concise posting note.'
+  };
+
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + process.env.OPENROUTER_API_KEY,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.PUBLIC_BASE_URL || 'https://ai-dollar-business-2026.onrender.com',
+        'X-Title': 'AI Dollar Business'
+      },
+      body: JSON.stringify({
+        model: 'openrouter/free',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a professional social media content creator. Write original, specific, useful business content in clear English. Do not invent customer testimonials, statistics, or business facts. If details are missing, use sensible general wording.'
+          },
+          {
+            role: 'user',
+            content: productInstructions[key] + '\\n\\nCustomer brief: ' + String(brief || 'General small business').slice(0, 3000) + '\\n\\nMake the result specific to this brief. Return only the finished product.'
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: key === 'captions' ? 1800 : 4000
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data?.error?.message || 'OpenRouter request failed with HTTP ' + response.status);
+    }
+    const generated = data?.choices?.[0]?.message?.content;
+    if (typeof generated !== 'string' || !generated.trim()) {
+      throw new Error('OpenRouter returned an empty response');
+    }
+    console.log('OpenRouter content generation succeeded for ' + key);
+    return generated.trim();
+  } catch (error) {
+    console.error('OpenRouter generation failed; using offline templates:', error.message);
+    return makeContent(key, brief);
+  }
+}
+
 function makeContent(key, brief) {
   const context = String(brief || 'your business').replace(/\s+/g, ' ').trim();
   const topics = [
@@ -134,7 +188,7 @@ function pdfBuffer(title, body) {
 }
 
 async function deliver(order) {
-  const content = await makeContent(order.key, order.brief);
+  const content = await generateContent(order.key, order.brief);
   const pdf = await pdfBuffer(order.name, content);
   const form = new FormData();
   form.append('chat_id', String(order.chatId));
