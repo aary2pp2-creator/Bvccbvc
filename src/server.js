@@ -37,31 +37,86 @@ async function sendTelegram(chatId, text) {
   return telegram('sendMessage', { chat_id: chatId, text });
 }
 
-async function makeContent(key, brief) {
-  const apiKey = process.env.OPENROUTER_API_KEY || process.env.AI_API_KEY;
-  if (!apiKey) {
-    return `Thank you for your order.\n\nCustomer brief: ${brief}\n\nAutomated AI generation is not enabled yet. Add OPENROUTER_API_KEY in Render Environment Variables.`;
-  }
-  const base = (process.env.AI_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
-  const response = await fetch(base + '/chat/completions', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      'content-type': 'application/json',
-      'HTTP-Referer': process.env.PUBLIC_BASE_URL || 'https://ai-dollar-business.onrender.com',
-      'X-Title': 'AI Dollar Business'
-    },
-    body: JSON.stringify({
-      model: process.env.AI_MODEL || 'openai/gpt-4o-mini',
-      messages: [{ role: 'user', content: `Create ${products[key].name} in polished English for this customer brief: ${brief}` }]
-    })
-  });
-  const responseText = await response.text();
-  if (!response.ok) throw new Error(`AI provider returned HTTP ${response.status}: ${responseText.slice(0, 1000)}`);
-  const data = JSON.parse(responseText);
-  return data.choices?.[0]?.message?.content || 'No content returned.';
-}
+function makeContent(key, brief) {
+  const context = String(brief || 'your business').replace(/\s+/g, ' ').trim();
+  const topics = [
+    'Introduce your business and the problem it solves',
+    'Share one practical tip for your audience',
+    'Explain a common mistake and how to avoid it',
+    'Show a behind-the-scenes moment',
+    'Answer a frequently asked customer question',
+    'Highlight one product or service benefit',
+    'Share a short customer success story (use a real one)',
+    'Explain how your process works',
+    'Post a useful checklist',
+    'Share a myth and the facts behind it',
+    'Introduce the people behind the business',
+    'Compare two ways to solve a customer problem',
+    'Share a quick tutorial',
+    'Explain who benefits most from your offer',
+    'Invite followers to ask questions',
+    'Share a thoughtful industry observation',
+    'Show how to get started with your service',
+    'Highlight a feature customers often overlook',
+    'Share a frequently used resource or tool',
+    'Tell the story behind your business',
+    'Give a step-by-step tip',
+    'Address a common hesitation',
+    'Share a helpful do-and-don’t list',
+    'Explain what makes your approach different',
+    'Invite the audience to share an opinion',
+    'Show a product or service in use',
+    'Share a short lesson learned',
+    'Answer a beginner-level question',
+    'Summarize the biggest benefit you offer',
+    'Invite the audience to take the next step'
+  ];
+  const formats = ['Single-image post', 'Carousel', 'Short video', 'Story', 'Text post'];
+  const cta = ['What would you add? Tell us below.', 'Save this tip for later.', 'Send us a message to learn more.', 'Share this with someone who needs it.', 'Follow for more practical ideas.'];
 
+  if (key === 'captions') {
+    const captions = [
+      `A better way to think about ${context}: focus on the value you bring, one helpful step at a time. What would make the biggest difference for you today? #SmallBusiness #HelpfulTips`,
+      `Your goals deserve a clear plan. At ${context}, we believe useful solutions should feel simple and practical. What are you working toward? #BusinessGrowth #YourGoals`,
+      `Quick reminder: progress comes from consistent, useful action—not trying to do everything at once. Save this for the days you need a reset. #Motivation #Consistency`,
+      `Looking for a smarter next step? Start by identifying the one challenge you want to solve, then choose an action you can take today. #PracticalAdvice #BusinessTips`,
+      `Behind every strong result is a process built with care. We are here to make the next step clearer and easier. Send us your questions. #CustomerCare #SmallBusiness`,
+      `Let's make things simpler. Choose one priority, give it your attention, and build from there. What is your number-one priority this week? #Focus #Progress`,
+      `A question worth asking: does your current approach make life easier for the people you serve? Keep their needs at the centre of every decision. #CustomerFirst #BusinessAdvice`,
+      `Small improvements can create meaningful momentum. Try one new idea, learn from the result, and keep refining your approach. #KeepImproving #Entrepreneurship`,
+      `Not sure where to begin? Tell us what you are trying to achieve and what is getting in the way. We would love to hear your perspective. #Community #LetsTalk`,
+      `Thank you for being part of our community. Your questions, ideas, and feedback help shape what we share next. What topic should we cover? #ThankYou #CommunityFirst`
+    ];
+    return '10 Social Media Captions\n\nCustomer brief: ' + context + '\n\n' +
+      captions.map((caption, index) => (index + 1) + '. ' + caption).join('\n\n') +
+      '\n\nNote: These captions are prepared from ready-made templates without an AI service. Review and personalize details before publishing.';
+  }
+
+  if (key === 'content_pack') {
+    return '30-Day Content Pack\n\nCustomer brief: ' + context + '\n\n' +
+      topics.map((topic, index) => {
+        const day = index + 1;
+        return 'Day ' + day + ' — ' + topic + '\nFormat: ' + formats[index % formats.length] +
+          '\nCaption starter: ' + topic + '. Share one useful point related to ' + context + ' and explain how your audience can apply it.' +
+          '\nCall to action: ' + cta[index % cta.length];
+      }).join('\n\n') +
+      '\n\nNote: This is a ready-made content framework generated without an AI service. Add your real examples, product details, and brand voice before publishing.';
+  }
+
+  if (key === 'calendar') {
+    return 'Monthly Content Calendar\n\nCustomer brief: ' + context + '\n\n' +
+      topics.map((topic, index) => {
+        const day = index + 1;
+        return 'Day ' + day + ': ' + topic + '\nSuggested format: ' + formats[index % formats.length] +
+          '\nGoal: ' + (index % 3 === 0 ? 'Build awareness' : index % 3 === 1 ? 'Educate and build trust' : 'Encourage conversation') +
+          '\nPlanning note: Create a post about ' + topic.toLowerCase() + ' for ' + context + '.';
+      }).join('\n\n') +
+      '\n\nNote: This is a ready-made monthly planning template generated without an AI service. Adjust dates and topics to suit your audience and business.';
+  }
+
+  return 'Thank you for your order.\n\nCustomer brief: ' + context +
+    '\n\nPlease contact /paysupport if you need help.';
+}
 function pdfBuffer(title, body) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
