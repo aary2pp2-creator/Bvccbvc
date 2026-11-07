@@ -209,6 +209,46 @@ async function deliver(order) {
 
 app.get('/health', (_req, res) => res.json({ ok: true, service: 'AI Dollar Business Telegram Stars bot' }));
 app.use(express.json({ limit: '256kb' }));
+app.use(express.static(path.join(process.cwd(), 'public')));
+
+const orderRateLimits = new Map();
+app.post('/api/orders', async (req, res) => {
+  const now = Date.now();
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const last = orderRateLimits.get(ip) || 0;
+  if (now - last < 30000) return res.status(429).json({ ok: false, message: 'Please wait before sending another order.' });
+
+  const { name, contact, service, details, language } = req.body || {};
+  const clean = value => String(value || '').trim().slice(0, 1500);
+  const customerName = clean(name);
+  const customerContact = clean(contact);
+  const serviceName = clean(service);
+  const brief = clean(details);
+  if (!customerName || !customerContact || !serviceName || brief.length < 10) {
+    return res.status(400).json({ ok: false, message: 'Please complete all fields and provide at least 10 characters of details.' });
+  }
+  if (!process.env.ADMIN_CHAT_ID) {
+    console.error('ADMIN_CHAT_ID is missing; website order notification was not sent.');
+    return res.status(503).json({ ok: false, message: 'Order notifications are not configured yet. Please try again later.' });
+  }
+  const message = [
+    '🛍️ New website order — AI Dollar Business',
+    'Name: ' + customerName,
+    'Contact: ' + customerContact,
+    'Service: ' + serviceName,
+    'Language: ' + (language === 'fa' ? 'Persian' : 'English'),
+    'Details: ' + brief
+  ].join('\n');
+  try {
+    await sendTelegram(process.env.ADMIN_CHAT_ID, message);
+    orderRateLimits.set(ip, now);
+    return res.json({ ok: true, message: 'Your order request has been sent. We will contact you soon.' });
+  } catch (error) {
+    console.error('Website order notification failed:', error.message);
+    return res.status(502).json({ ok: false, message: 'We could not send your request right now. Please try again later.' });
+  }
+});
+
 
 app.post('/telegram/webhook', async (req, res) => {
   if (process.env.TELEGRAM_WEBHOOK_SECRET &&
