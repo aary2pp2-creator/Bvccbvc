@@ -37,9 +37,10 @@ async function sendTelegram(chatId, text) {
   return telegram('sendMessage', { chat_id: chatId, text });
 }
 
-async function generateContent(key, brief) {
+async function generateContent(key, brief, strict = false) {
   if (!process.env.OPENROUTER_API_KEY) {
     console.warn('OPENROUTER_API_KEY is missing; using offline templates.');
+    if (strict) throw new Error('OPENROUTER_API_KEY is missing in Render environment variables.');
     return makeContent(key, brief);
   }
 
@@ -87,9 +88,13 @@ async function generateContent(key, brief) {
     return generated.trim();
   } catch (error) {
     console.error('OpenRouter generation failed; using offline templates:', error.message);
+    if (strict) throw error;
     return makeContent(key, brief);
   }
 }
+
+const aiTestCooldowns = new Map();
+let lastAiTestAt = 0;
 
 function makeContent(key, brief) {
   const context = String(brief || 'your business').replace(/\s+/g, ' ').trim();
@@ -260,7 +265,29 @@ app.post('/telegram/webhook', async (req, res) => {
     if (!message.text) return;
     const t = message.text.trim();
 
-    if (t === '/start' || t === '/help') {
+    if (t === '/aitest') {
+      if (message.chat.type !== 'private') {
+        await sendTelegram(chatId, 'Please run /aitest in a private chat with this bot.');
+        return;
+      }
+      const now = Date.now();
+      const lastForChat = aiTestCooldowns.get(String(chatId)) || 0;
+      if (now - lastAiTestAt < 60000 || now - lastForChat < 600000) {
+        await sendTelegram(chatId, 'The AI test is rate-limited. Please try again in a few minutes.');
+        return;
+      }
+      lastAiTestAt = now;
+      aiTestCooldowns.set(String(chatId), now);
+      await sendTelegram(chatId, 'Testing the OpenRouter connection. No purchase or payment is required.');
+      try {
+        const sample = await generateContent('captions', 'A coffee shop targeting young professionals', true);
+        await sendTelegram(chatId, 'OpenRouter connection successful. Here is a short sample:\\n\\n' + sample.slice(0, 3000));
+      } catch (error) {
+        console.error('OpenRouter test command failed:', error.message);
+        await sendTelegram(chatId, 'OpenRouter test failed: ' + error.message.slice(0, 700) + '\\n\\nPlease check the OPENROUTER_API_KEY value in Render Environment settings. Do not send the key in chat.');
+      }
+      return;
+    } else if (t === '/start' || t === '/help') {
       await sendTelegram(chatId,
         'Welcome to AI Dollar Business!\n\n/services - View digital products\n/buy - Purchase a product\n/terms - Terms of sale\n/paysupport - Payment help\n\nExample:\n/buy captions | A coffee shop targeting young professionals');
     } else if (t === '/services') {
