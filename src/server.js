@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import PDFDocument from 'pdfkit';
+import { handleTradingCommand } from './trading.js';
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -304,6 +305,7 @@ app.post('/telegram/webhook', async (req, res) => {
 
     if (!message.text) return;
     const t = message.text.trim();
+    if (await handleTradingCommand(t, chatId, message.from.id, sendTelegram)) return;
 
     if (t === '/aitest') {
       if (message.chat.type !== 'private') {
