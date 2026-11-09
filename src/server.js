@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import PDFDocument from 'pdfkit';
+import { handleTradingCommand } from './trading.js';
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -370,8 +371,10 @@ app.post('/telegram/webhook', async (req, res) => {
         currency: 'XTR',
         prices: [{ label: product.name, amount: product.stars }]
       });
+    } else if (await handleTradingCommand(t, chatId, message.from.id, sendTelegram)) {
+      return;
     } else {
-      await sendTelegram(chatId, 'Use /services to view products or /start for help.');
+      await sendTelegram(chatId, 'Use /services to view products, /trade for paper trading, or /start for help.');
     }
   } catch (error) {
     console.error('Telegram update error:', error);
