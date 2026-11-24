@@ -34,21 +34,42 @@ async function telegram(method, body) {
   return result.result;
 }
 
-async function sendTelegram(chatId, text) {
-  return telegram('sendMessage', { chat_id: chatId, text });
+async function sendTelegram(chatId, text, extra = {}) {
+  return telegram('sendMessage', { chat_id: chatId, text, ...extra });
 }
 
-async function generateContent(key, brief, strict = false) {
+const pendingBriefs = new Map();
+const detectLanguage = value => /[\u0600-\u06FF]/.test(String(value || '')) ? 'fa' : 'en';
+
+async function createInvoice(chatId, userId, key, brief, language = 'en') {
+  const product = products[key];
+  const order = {
+    id: crypto.randomUUID(), key, name: product.name, stars: product.stars,
+    brief: String(brief).slice(0, 3000), language, chatId, userId,
+    paid: false, delivered: false
+  };
+  const orders = await readOrders();
+  orders.push(order);
+  await writeOrders(orders);
+  await telegram('sendInvoice', {
+    chat_id: chatId, title: product.name, description: product.description,
+    payload: order.id, provider_token: '', currency: 'XTR',
+    prices: [{ label: product.name, amount: product.stars }]
+  });
+}
+
+async function generateContent(key, brief, strict = false, language = 'en') {
   if (!process.env.OPENROUTER_API_KEY) {
     console.warn('OPENROUTER_API_KEY is missing; using offline templates.');
     if (strict) throw new Error('OPENROUTER_API_KEY is missing in Render environment variables.');
     return makeContent(key, brief);
   }
 
+  const outputLanguage = language === 'fa' ? 'Persian (Farsi)' : 'English';
   const productInstructions = {
-    captions: 'Write exactly 10 distinct, polished, ready-to-use social media captions in English. Include suitable calls to action and relevant hashtags.',
-    content_pack: 'Create a useful 30-day social media content pack in English. For each day include a topic, format, complete caption, and call to action.',
-    calendar: 'Create a practical 30-day social media content calendar in English. For each day include topic, format, content goal, and a concise posting note.'
+    captions: `Write exactly 10 distinct, polished, ready-to-use social media captions in ${outputLanguage}. Include suitable calls to action and relevant hashtags.`,
+    content_pack: `Create a useful 30-day social media content pack in ${outputLanguage}. For each day include a topic, format, complete caption, and call to action.`,
+    calendar: `Create a practical 30-day social media content calendar in ${outputLanguage}. For each day include topic, format, content goal, and a concise posting note.`
   };
 
   try {
@@ -65,7 +86,7 @@ async function generateContent(key, brief, strict = false) {
         messages: [
           {
             role: 'system',
-            content: 'You are a professional social media content creator. Write original, specific, useful business content in clear English. Do not invent customer testimonials, statistics, or business facts. If details are missing, use sensible general wording.'
+            content: `You are a professional social media content creator. Write original, specific, useful business content in ${outputLanguage}. Match the requested language throughout, including headings and calls to action. Do not invent customer testimonials, statistics, or business facts. If details are missing, use sensible general wording.`
           },
           {
             role: 'user',
@@ -194,7 +215,13 @@ function pdfBuffer(title, body) {
 }
 
 async function deliver(order) {
-  const content = await generateContent(order.key, order.brief);
+  const content = await generateContent(order.key, order.brief, false, order.language || 'en');
+  if (order.language === 'fa') {
+    const chunks = content.match(/[\s\S]{1,3200}/g) || [content];
+    await sendTelegram(order.chatId, 'سفارش شما آماده است. از خریدتان سپاسگزاریم.\n\n' + chunks[0]);
+    for (const chunk of chunks.slice(1)) await sendTelegram(order.chatId, chunk);
+    return;
+  }
   const pdf = await pdfBuffer(order.name, content);
   const form = new FormData();
   form.append('chat_id', String(order.chatId));
@@ -218,7 +245,6 @@ app.post('/api/orders', async (req, res) => {
   const ip = req.ip || req.socket.remoteAddress || 'unknown';
   const last = orderRateLimits.get(ip) || 0;
   if (now - last < 30000) return res.status(429).json({ ok: false, message: 'Please wait before sending another order.' });
-
   const { name, contact, service, details, language } = req.body || {};
   const clean = value => String(value || '').trim().slice(0, 1500);
   const customerName = clean(name);
@@ -262,6 +288,22 @@ app.post('/telegram/webhook', async (req, res) => {
 
   try {
     const update = req.body;
+
+    if (update?.callback_query) {
+      const query = update.callback_query;
+      const chatId = query.message?.chat?.id;
+      const pending = pendingBriefs.get(String(chatId));
+      const key = String(query.data || '').replace('order:', '');
+      if (!pending || !products[key]) {
+        await telegram('answerCallbackQuery', { callback_query_id: query.id, text: 'Please send your business brief again.' });
+        if (chatId) await sendTelegram(chatId, 'لطفاً توضیحات کسب‌وکار و هدفتان را دوباره ارسال کنید.');
+        return;
+      }
+      pendingBriefs.delete(String(chatId));
+      await telegram('answerCallbackQuery', { callback_query_id: query.id, text: 'Preparing your invoice…' });
+      await createInvoice(chatId, query.from.id, key, pending.brief, pending.language);
+      return;
+    }
 
     if (update?.pre_checkout_query) {
       const query = update.pre_checkout_query;
@@ -348,32 +390,22 @@ app.post('/telegram/webhook', async (req, res) => {
         return;
       }
       const key = match[1].toLowerCase();
-      const product = products[key];
-      const order = {
-        id: crypto.randomUUID(),
-        key,
-        name: product.name,
-        stars: product.stars,
-        brief: match[2],
-        chatId,
-        userId: message.from.id,
-        paid: false,
-        delivered: false
-      };
-      const orders = await readOrders();
-      orders.push(order);
-      await writeOrders(orders);
-      await telegram('sendInvoice', {
-        chat_id: chatId,
-        title: product.name,
-        description: product.description,
-        payload: order.id,
-        provider_token: '',
-        currency: 'XTR',
-        prices: [{ label: product.name, amount: product.stars }]
-      });
+      await createInvoice(chatId, message.from.id, key, match[2], detectLanguage(match[2]));
     } else {
-      await sendTelegram(chatId, 'Use /services to view products or /start for help.');
+      if (message.chat.type !== 'private') return;
+      if (t.length < 12) {
+        await sendTelegram(chatId, 'لطفاً نوع کسب‌وکار، محصول یا خدمت، مخاطب و هدفتان را در یک پیام توضیح دهید.\n\nPlease describe your business, audience, and goal in at least 12 characters.');
+        return;
+      }
+      const language = detectLanguage(t);
+      pendingBriefs.set(String(chatId), { brief: t.slice(0, 3000), language });
+      await sendTelegram(chatId,
+        language === 'fa' ? 'توضیحات شما دریافت شد. حالا محصول موردنظرتان را انتخاب کنید:' : 'Got it. Choose the digital product you want:',
+        { reply_markup: { inline_keyboard: [
+          [{ text: '۱۰ کپشن — ۳۵۰ ⭐', callback_data: 'order:captions' }],
+          [{ text: 'بسته محتوایی ۳۰ روزه — ۱۰۰۰ ⭐', callback_data: 'order:content_pack' }],
+          [{ text: 'تقویم محتوایی ماهانه — ۱۹۰۰ ⭐', callback_data: 'order:calendar' }]
+        ] } });
     }
   } catch (error) {
     console.error('Telegram update error:', error);
